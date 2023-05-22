@@ -43,7 +43,8 @@ mongoose.connect("mongodb+srv://mani16032:mani16032@cluster0.idomekg.mongodb.net
 const userSchema = new mongoose.Schema({
     email: String,
     password: String,
-    googleId: String
+    googleId: String,
+    secret: String
 });
 
 // const secret = "Thisisourlittlesecret.";   move this to .env for security
@@ -119,11 +120,73 @@ app.get("/register", function(req, res){
 });
 
 app.get("/secrets", function(req, res){
+
+    User.find({"secret": {$ne: null}})
+    .then(foundUsers => {
+        if (foundUsers) {
+            res.render("secrets", {usersWithSecrets: foundUsers});
+        }
+    })
+    .catch(err => {
+        console.log(err);
+    });
+
+    // User.find({"secret": {$ne: null}}, function(err, foundUsers){
+    //     if(err){
+    //         console.log(err);
+    //     } else {
+    //         if(foundUsers){
+    //             res.render("secrets", {usersWithSecrets: foundUsers});
+    //         }
+    //     }
+    // });
+    // if (req.isAuthenticated()){
+    //     res.render("secrets");
+    // } else {
+    //     res.redirect("/login");
+    // }
+});
+
+app.get("/submit", function(req, res){
     if (req.isAuthenticated()){
-        res.render("secrets");
+        res.render("submit");
     } else {
         res.redirect("/login");
     }
+});
+
+app.post("/submit", function(req, res){
+    const submittedSecret = req.body.secret;
+
+    console.log(req.user.id);
+
+
+    User.findById(req.user.id)
+    .then(foundUser => {
+        if (foundUser) {
+            foundUser.secret = submittedSecret;
+            return foundUser.save();
+        }
+    })
+    .then(() => {
+        res.redirect("/secrets");
+    })
+    .catch(err => {
+        console.log(err);
+    });
+
+    // User.findById(req.user.id, function(err, foundUser){
+    //     if(err){
+    //         console.log(err);
+    //     } else {
+    //         if(foundUser){
+    //             foundUser.secret = submittedSecret;
+    //             foundUser.save(function(){
+    //                 res.redirect("/secrets");
+    //             });
+    //         }
+    //     }
+    // });
 });
 
 app.get("/logout", function(req, res){
